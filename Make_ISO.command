@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-ISO_FILE_NAME=LongQT-OpenCore-v0.4.iso
+ISO_FILE_NAME=LongQT-OpenCore-v0.5.iso
 VOL_NAME=LongQT-OpenCore
 SOURCE_DIR=./
 BOOT_IMG=BOOT.img
@@ -39,5 +39,6 @@ xorriso -rockridge off -as mkisofs \
   -m "Make_ISO*" \
   -m "LICENSE*" \
   -m "cpu-models.conf" \
+  -m "Create_Recovery_ISO*" \
   -output ~/Desktop/${ISO_FILE_NAME} \
   ${SOURCE_DIR}

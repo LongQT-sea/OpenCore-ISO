@@ -1,7 +1,7 @@
 #!/bin/bash
 # Copyright (c) 2024-2025, LongQT-sea
 # macOS Recovery ISO Creator
-# Downloads macOS recovery images from Apple and converts them to bootable ISO files
+# Downloads macOS recovery images from Apple and converts them to bootable DVD ISO files
 
 set -e
 
@@ -64,6 +64,7 @@ check_python() {
         print_error "Python3 is not installed on your system."
         echo "Please install Python3:"
         echo "Download it from: https://www.python.org/downloads/"
+		echo "Or use Install_Python3.command to do it automatically"
         exit 1
     fi
 }

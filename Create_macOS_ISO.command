@@ -1,8 +1,8 @@
 #!/bin/bash
-
-# Copyright (c) 2024-2025, LongQT-sea
+# Copyright (c) 2024–2025, LongQT-sea
 # macOS Full Installer ISO Creator
-# This script downloads macOS installers from Apple server and creates DVD/CD ISO files for Proxmox VE, QEMU/KVM and VMware.
+# Downloads official macOS installers from Apple servers and create a true DVD-format macOS installer ISO file.
+# Intended for use with Proxmox, QEMU, VirtualBox, and VMware.
 
 set -e  # Exit on error
 
@@ -23,17 +23,18 @@ print_color() {
     echo -e "${color}$@${NC}"
 }
 
-# Function to check if running as root (for sudo operations)
+# Function to check if the script has sudo privileges
 check_sudo() {
     if ! sudo -n true 2>/dev/null; then
-        print_color $YELLOW "This script will requires sudo privileges for createinstallmedia."
-        print_color $YELLOW "Please enter your password after the installer finishes downloading."
+        print_color $YELLOW "This script requires sudo privileges to run createinstallmedia."
+        print_color $YELLOW "You’ll be prompted for password after the macOS installer finishes downloading."
+		echo ""
     fi
 }
 
 # Function to get available installers
 get_installers() {
-    print_color $BLUE "Fetching available macOS installers from Apple server..."
+    print_color $GREEN "Fetching available macOS installers from Apple server..."
     installers=$(softwareupdate --list-full-installers 2>/dev/null | grep "* Title:" | sed 's/^[[:space:]]*//')
     
     if [ -z "$installers" ]; then
@@ -134,6 +135,9 @@ create_iso() {
     # Determine installer app name based on title
     local installer_name
     case "$title" in
+        "macOS Tahoe")
+            installer_name="Install macOS Tahoe"
+            ;;
         "macOS Sequoia")
             installer_name="Install macOS Sequoia"
             ;;
@@ -145,9 +149,6 @@ create_iso() {
             ;;
         "macOS Monterey")
             installer_name="Install macOS Monterey"
-            ;;
-        "macOS Tahoe")
-            installer_name="Install macOS Tahoe"
             ;;
         "macOS Big Sur")
             installer_name="Install macOS Big Sur"
@@ -235,7 +236,7 @@ create_iso() {
     sleep 2
     
     # Step 4: Create hybrid ISO
-    print_color $BLUE "Step 4/4: Creating hybrid ISO (this may take several minutes)..."
+    print_color $BLUE "Step 4/4: Creating hybrid ISO ..."
     if hdiutil makehybrid -hfs -udf -o "$iso_file" "$sparse_image"; then
         print_color $GREEN "ISO created successfully"
     else
@@ -272,7 +273,7 @@ main() {
     # Check for required tools
     for tool in softwareupdate hdiutil diskutil bc; do
         if ! command -v $tool &> /dev/null; then
-            print_color $RED "Error: Required tool $tool is not installed."
+            print_color $RED "Error: Required tool $tool is not found."
             exit 1
         fi
     done

@@ -4,6 +4,8 @@ A properly configured OpenCore **DVD/CD-format ISO file** for Proxmox VE to crea
 
 Supports all Intel-based macOS versions — from **Mac OS X 10.4** to **macOS 26**.
 
+Can also be used with **libvirt** or **virt-manager**.
+
 > [!TIP]
 > **For AMD users:**
 > Enjoy a true **vanilla macOS** experience with no kernel patches required for stable operation.
@@ -39,8 +41,8 @@ Get the latest OpenCore ISO and macOS Recovery here: 👉 [Release page](https:/
 
 ### 4. System
 
-* **Machine Type**: `q35` *(if you must use `i440fx`, [cpu-models.conf](https://github.com/LongQT-sea/OpenCore-ISO/blob/main/cpu-models.conf) is required)*
-* **BIOS**: UEFI (OVMF)
+* **Machine Type**: **q35** *(if you must use `i440fx`, [cpu-models.conf](https://github.com/LongQT-sea/OpenCore-ISO/blob/main/cpu-models.conf) is required)*
+* **BIOS**: OVMF (UEFI)
 * **Add EFI Disk**: ✅ Enabled
 * **Pre-Enroll Keys**: ❌ Untick to disable Secure Boot
 * **QEMU Guest Agent**:
@@ -141,8 +143,7 @@ Add an **additional CD/DVD drive** for the macOS installer or Recovery ISO, then
 * Finally, copy `Mount_EFI.command` and `ProperTree` to the Desktop for later use when you need to edit `config.plist`.
 
 > [!TIP]
-> Use Create_Recovery_ISO.command to download the macOS Recovery image from Apple and convert it into a macOS Recovery ISO file.
-> Use Create_macOS_ISO.command to download the full macOS installer from Apple and create a true DVD-format macOS installer ISO file.
+> * Use Create_macOS_ISO.command to download the full macOS installer from Apple and create a true DVD-format macOS installer ISO file.
 
 > [!IMPORTANT]
 > For PCIe/dGPU passthrough on **q35**, you have to disable ACPI-based PCI hotplug (revert to PCIe native hotplug)
