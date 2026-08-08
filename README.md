@@ -211,7 +211,7 @@ Legacy OS X no-keyboard issue:
 > * Disable QEMU ACPI-based PCI hotplug (revert to native PCIe hotplug). Run this in the Proxmox shell:
 > ```sh
 > clear; read -p "Enter your macOS VM ID number: " VMID; \
-> ARGS="$(qm config $VMID --current | grep ^args: | cut -d' ' -f2-)"; \
+> ARGS="$(qm config $VMID | grep ^args: | cut -d' ' -f2-)"; \
 > qm set $VMID -args "$ARGS -global ICH9-LPC.acpi-pci-hotplug-with-bridge-support=off"
 > ```
 
@@ -232,7 +232,7 @@ Legacy OS X no-keyboard issue:
 > For a dummy sound device on modern macOS (e.g. for Parsec, Sunshine/Moonlight), run this in the Proxmox shell:
 > ```sh
 > clear; read -p "Enter your macOS VM ID number: " VMID; \
-> ARGS="$(qm config $VMID --current | grep ^args: | cut -d' ' -f2-)"; \
+> ARGS="$(qm config $VMID | grep ^args: | cut -d' ' -f2-)"; \
 > qm set $VMID -args "$ARGS -device virtio-sound,audiodev=dummy -audiodev none,id=dummy"
 > ```
 
@@ -248,7 +248,7 @@ On **macOS 26**, the cursor may randomly freeze. Quick workaround: toggle **Use 
 Better fix: disable **Use tablet for pointer** in the VM's **Options** tab, then run this in the Proxmox shell to use **`virtio-tablet-pci`** instead:
 ```sh
 clear; read -p "Enter your macOS VM ID number: " VMID; \
-ARGS="$(qm config $VMID --current | grep ^args: | cut -d' ' -f2-)"; \
+ARGS="$(qm config $VMID | grep ^args: | cut -d' ' -f2-)"; \
 qm set $VMID -args "$ARGS -device virtio-tablet"
 ```
 
