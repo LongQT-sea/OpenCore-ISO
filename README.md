@@ -1,13 +1,15 @@
-## About
+## OpenCore-ISO - OpenCore for Proxmox VE / QEMU
 
-A carefully crafted OpenCore **ISO** image for running macOS virtual machines on **Proxmox VE** and **QEMU/KVM**.
+A carefully crafted [OpenCore](https://github.com/acidanthera/opencorepkg) **ISO** image for running macOS virtual machines on **Proxmox VE** and **QEMU/KVM**.
 Built from scratch with a clean, efficient architecture — no legacy configurations, no OVMF patches, no kernel patches, true vanilla macOS.
 
 Supports every Intel-based macOS release from **[Mac OS X 10.4 Tiger](https://dortania.github.io/OpenCore-Install-Guide/installer-guide/mac-install-dmg.html#acidanthera-images)** through **[macOS 26 Tahoe](https://github.com/LongQT-sea/macos-iso-builder)**.
 
 > [!TIP]
 > This is likely the best way to run macOS on AMD hardware while retaining full hypervisor access for other VMs.
-> Also overcomes a lot of AMD CPU limitations listed on [Dortania guide](https://dortania.github.io/Anti-Hackintosh-Buyers-Guide/CPU.html#cpus-to-avoid).
+> Also overcomes a lot of AMD CPU limitations listed in the [Dortania guide](https://dortania.github.io/Anti-Hackintosh-Buyers-Guide/CPU.html#cpus-to-avoid).
+
+Looking to run macOS on **VMware**? See https://github.com/DrDonk/OC4VM by David Parsons.
 
 ---
 
@@ -39,11 +41,11 @@ Supports every Intel-based macOS release from **[Mac OS X 10.4 Tiger](https://do
 ## Download
 
 * Latest OpenCore-ISO: [LongQT-OpenCore-v0.7.iso](https://github.com/LongQT-sea/OpenCore-ISO/releases/download/v0.7/LongQT-OpenCore-v0.7.iso)
-* For legit macOS installers and recovery ISOs: [LongQT-sea/macos-iso-builder](https://github.com/LongQT-sea/macos-iso-builder)
+* macOS installers and recovery ISOs (only supported source): [macos-iso-builder](https://github.com/LongQT-sea/macos-iso-builder)
 
-> [!CAUTION]
-> These iso are **true CD/DVD ISO image**.
-> Add them to your VM as a **CD/DVD drive**. Do **NOT** change **`media=cdrom`** to **`media=disk`** in the VM config.
+> [!IMPORTANT]
+> These ISOs are **true CD/DVD ISO images**. Add them to your VM as a **CD/DVD drive**.<br>
+> Do **NOT** change **`media=cdrom`** to **`media=disk`** in the VM config.
 
 > [!TIP]
 > Run [`Create_macOS_ISO.command`](/Create_macOS_ISO.command) inside your VM to download the full macOS installer from Apple and generate a proper DVD-format macOS installer ISO.
@@ -55,21 +57,15 @@ Supports every Intel-based macOS release from **[Mac OS X 10.4 Tiger](https://do
 ### 1. Create a New VM
 Open the Proxmox VE web interface and create a new VM.
 
----
-
 ### 2. General
 
 * **VM ID**: Any available ID
 * **Name**: Any name you like
 
----
-
 ### 3. OS
 
 * **ISO Image**: Select `LongQT-OpenCore-v0.X.iso`
 * **Guest OS Type**: Leave as default (`Linux`)
-
----
 
 ### 4. System
 
@@ -81,8 +77,6 @@ Open the Proxmox VE web interface and create a new VM.
 
   * [✓] Enable for macOS 10.14 – macOS 26
   * [✗] Leave as default for macOS 10.4 – macOS 10.13
-
----
 
 ### 5. Hard Disk
 
@@ -96,15 +90,20 @@ The **disk bus type** depends on your needs:
 | macOS 10.15 – macOS 26   | `SATA` / `VirtIO Block` |
 | macOS 10.4 – macOS 10.14 | `SATA`                  |
 
-> [!Tip]
+> [!TIP]
 > Using SATA with **SSD emulation** and **Discard** enabled automatically enables TRIM — no need to run `trimforce enable`.
-
----
 
 ### 6. CPU
 
 > [!CAUTION]
 > Follow these CPU settings carefully! Incorrect CPU configuration will cause boot failure.
+
+#### Type (Model)
+
+| macOS Version            | Recommended CPU Type                               |
+| ------------------------ | -------------------------------------------------- |
+| macOS 10.11 – macOS 26   | `Skylake-Client-v4`, `Skylake-Server-v4` (AVX-512) |
+| macOS 10.4 – macOS 10.10 | `Nehalem`                                          |
 
 #### Cores
 Choose based on your hardware (`power of 2`): 1 / 2 / 4 / 8 / 16 / 32 / 64
@@ -117,17 +116,10 @@ Choose based on your hardware (`power of 2`): 1 / 2 / 4 / 8 / 16 / 32 / 64
 > | 20 | 4 | 5 |
 > | 24 | 8 | 3 |
 
-#### Type (Model)
-
-| macOS Version            | Recommended CPU Type                               |
-| ------------------------ | -------------------------------------------------- |
-| macOS 10.11 – macOS 26   | `Skylake-Client-v4`, `Skylake-Server-v4` (AVX-512) |
-| macOS 10.4 – macOS 10.10 | `Nehalem`                                          |
-
 > [!NOTE]
 > **AMD CPUs:**
 > * **macOS 10.4 – macOS 12**, tick [✓] **Advanced**, under **Extra CPU Flags**, turn off `pcid` and `spec-ctrl`. [^amdcpu1]
-> * **macOS 13 – macOS 26**, need to set the CPU manually via the Proxmox VE Shell[^amdcpu2], example:
+> * **macOS 13 – macOS 26**, you need to set the CPU manually via the Proxmox VE Shell[^amdcpu2], example:
 >
 >   ```
 >   # For CPUs with AVX2 support
@@ -138,8 +130,8 @@ Choose based on your hardware (`power of 2`): 1 / 2 / 4 / 8 / 16 / 32 / 64
 >   ```
 > * If the VM fails to boot with more than 1 core, add `tsc=reliable` to the host kernel command line (`/etc/default/grub`).
 > ---
->  **Intel CPUs:**
-> * Intel HEDT / E5-2xxx v3/v4 need to override CPUID `model`[^intel-hedt], example:
+> **Intel CPUs:**
+> * Intel HEDT / E5-2xxx v3/v4 require overriding the CPUID `model`[^intel-hedt], example:
 >
 >   ```
 >   qm set [VMID] --args "-cpu Broadwell-noTSX,model=158"
@@ -149,7 +141,7 @@ Choose based on your hardware (`power of 2`): 1 / 2 / 4 / 8 / 16 / 32 / 64
 >   ```
 >   qm set [VMID] --args "-cpu Haswell-noTSX,stepping=3"
 >   ```
-> * If you need to run nested virtualization software (such as Docker Desktop, VMware Fusion, or VirtualBox) inside macOS VM, use QEMU named CPU model with the `+vmx` CPU flag, example:
+> * If you need to run nested virtualization software (such as Docker Desktop, VMware Fusion, or VirtualBox) inside the macOS VM, use QEMU named CPU model with the `+vmx` CPU flag, example:
 >   ```
 >   qm set [VMID] --args "-cpu Skylake-Client-v4,+vmx"
 >   ```
@@ -157,14 +149,10 @@ Choose based on your hardware (`power of 2`): 1 / 2 / 4 / 8 / 16 / 32 / 64
 
 For more details, see [QEMU CPU Guide – macOS Guests](https://github.com/LongQT-sea/qemu-cpu-guide?#macos-guests).
 
----
-
 ### 7. Memory
 
 * **RAM**: Minimum 2 GB (4 GB or more recommended)
-* Disable [✗] Ballooning Device
-
----
+* [✗] Disable **Ballooning Device**
 
 ### 8. Network
 
@@ -176,13 +164,11 @@ Choose the correct adapter based on macOS version:
 | macOS 10.11 – 10.15 | `VMware vmxnet3`   |
 | macOS 10.4 – 10.10  | `Intel E1000`      |
 
----
-
 ### 9. Finalize
 
 Add an **additional CD/DVD drive** for the macOS installer or Recovery ISO, then start the VM to begin installation.
 
-> [!Tip]
+> [!TIP]
 > * First-time installing macOS? Format the disk in **Disk Utility** before installing macOS.
 > * **Skip iCloud login** during setup (configure it later, see [Post-Install](#post-install))
 
@@ -194,7 +180,7 @@ If you encounter boot issues, check:
 * Secure Boot is **disabled** (`Pre-Enroll Keys` unchecked)
 * The ISO is mounted as a **CD/DVD**, not a disk
 * Try a different **CPU model**
-* For Mac OS X 10.4 Tiger, choose machine type q35, version <= 10.0
+* For Mac OS X 10.4 Tiger, choose machine type q35, version 10.0 or older
 
 Legacy OS X no-keyboard issue:
 * Either add `-device usb-kbd` to the QEMU args or run `device_add usb-kbd` in the VM Monitor tab.
@@ -204,72 +190,72 @@ Legacy OS X no-keyboard issue:
 ## Post-Install
 
 ### 1. Install OpenCore onto the macOS startup disk (macOS 10.11 – macOS 26)
-   * After macOS installation is complete, open **`LongQT-OpenCore`** on the Desktop and run **`Mount_EFI.command`** to mount the EFI partition on the macOS startup disk.
-   * Copy the **EFI** folder from **`LongQT-OpenCore/EFI_RELEASE/`** to the mounted EFI partition. This ensures that macOS will boot using the OpenCore EFI stored on the macOS startup disk in future startups.
-   * Run **`Install_Python3.command`** to install Python 3, many apps and scripts need it.
-   * Copy **`Mount_EFI.command`**, **`ProperTree`**, and **`GenSMBIOS`** to the Desktop for later use when you need to edit **`config.plist`**.
-   * You can now remove the **LongQT-OpenCore** ISO CD/DVD from the VM **Hardware** tab.
+   * Open **`LongQT-OpenCore`** on the Desktop and run **`Mount_EFI.command`** to mount the EFI partition.
+   * Copy the **EFI** folder from **`LongQT-OpenCore/EFI_RELEASE/`** into that EFI partition. The VM will then boot from its own disk.
+   * Run **`Install_Python3.command`**. Many apps and scripts need Python 3.
+   * Copy **`Mount_EFI.command`**, **`ProperTree`**, and **`GenSMBIOS`** to the Desktop. You will need them to edit **`config.plist`**.
+   * Remove the **LongQT-OpenCore** ISO from the VM **Hardware** tab.
 
 ### 2. To enable iCloud, iMessage, and other iServices
    * Follow [Dortania iServices](https://dortania.github.io/OpenCore-Post-Install/universal/iservices.html) guide to generate your own SMBIOS.
-   * macOS 15 and macOS 26 need to install [VMHide.kext](https://github.com/Carnations-Botanica/VMHide)
+   * On macOS 15 and macOS 26, install [VMHide.kext](https://github.com/Carnations-Botanica/VMHide)
 
 ### 3. For smooth GUI performance and 3D acceleration
-
 * Pass through a supported Intel iGPU or dGPU:
-
   * **Intel iGPU passthrough:** see [LongQT-sea/intel-igpu-passthru](https://github.com/LongQT-sea/intel-igpu-passthru)
-  * **dGPU passthrough:** ensure you have a supported dGPU, see [Dortania GPU Buyers Guide](https://dortania.github.io/GPU-Buyers-Guide/modern-gpus/amd-gpu.html#native-amd-gpus)
+  * **dGPU passthrough:** make sure your dGPU is supported, see [Dortania GPU Buyers Guide](https://dortania.github.io/GPU-Buyers-Guide/modern-gpus/amd-gpu.html#native-amd-gpus)
 
 > [!IMPORTANT]
-> PCIe/dGPU passthrough on a **q35** machine requires:
+> For PCIe/dGPU passthrough on a **q35** machine:
 > * Disable Resizable BAR / Smart Access Memory in UEFI/BIOS.
 > * Disable QEMU ACPI-based PCI hotplug (revert to native PCIe hotplug). Run this in the Proxmox shell:
-> ```
+> ```sh
 > clear; read -p "Enter your macOS VM ID number: " VMID; \
 > ARGS="$(qm config $VMID --current | grep ^args: | cut -d' ' -f2-)"; \
 > qm set $VMID -args "$ARGS -global ICH9-LPC.acpi-pci-hotplug-with-bridge-support=off"
 > ```
 
-> [!Tip]
-> If you need ReBAR enabled (for multi-GPU systems), set **BAR 0** of the dGPU you intend to passthrough to **256 MB**, example:
-> ```
-> # Unbind from the current driver:
-> echo 0000:01:00.0 > /sys/bus/pci/drivers/amdgpu/unbind
+> [!TIP]
+> If you need ReBAR enabled (for multi-GPU systems), set **BAR 0** of the dGPU you want to pass through to **256 MB**:
+> ```sh
+> # List current GPUs and resizable BAR sizes:
+> lspci -d ::0300 -vv | grep -E 'VGA|BAR 0'
+>
+> # Unbind from whichever driver currently owns it (amdgpu, vfio-pci, ...):
 > echo 0000:01:00.0 > /sys/bus/pci/drivers/vfio-pci/unbind
-> # Set BAR 0 to 256MB:
-> echo 8 > /sys/bus/pci/devices/0000:04:00.0/resource0_resize
+>
+> # Set BAR 0 size: 8 = 256MB, 9 = 512MB, 10 = 1GB
+> echo 8 > /sys/bus/pci/devices/0000:01:00.0/resource0_resize
 > ```
 
-> [!Tip]
-> On modern macOS versions, if you need a dummy virtual sound device (e.g., for **Parsec, Sunshine/MoonLight**), run this in Proxmox shell:
-> ```
+> [!TIP]
+> For a dummy sound device on modern macOS (e.g. for Parsec, Sunshine/Moonlight), run this in the Proxmox shell:
+> ```sh
 > clear; read -p "Enter your macOS VM ID number: " VMID; \
 > ARGS="$(qm config $VMID --current | grep ^args: | cut -d' ' -f2-)"; \
 > qm set $VMID -args "$ARGS -device virtio-sound,audiodev=dummy -audiodev none,id=dummy"
 > ```
 
-> [!Tip]
-> To disable SIP, press <kbd>Spacebar</kbd> in the OpenCore boot menu and select the "Toggle SIP" option.
+> [!TIP]
+> To disable SIP, press <kbd>Spacebar</kbd> in the OpenCore boot menu and select **Toggle SIP**.
 
 ---
 
 ## macOS Tahoe Cursor Freeze Fix
 
-On **macOS 26**, the cursor may randomly freeze. A temporary workaround is to toggle **Use tablet for pointer** in VM’s **Options** tab.
+On **macOS 26**, the cursor may randomly freeze. Quick workaround: toggle **Use tablet for pointer** in the VM's **Options** tab.
 
-A better fix is to use **`virtio-tablet-pci`**. To do this, disable **Use tablet for pointer** in VM’s **Options** tab, then run this in Proxmox shell:
-   ```
-   clear; read -p "Enter your macOS VM ID number: " VMID; \
-   ARGS="$(qm config $VMID --current | grep ^args: | cut -d' ' -f2-)"; \
-   qm set $VMID -args "$ARGS -device virtio-tablet"
-   ```
-> [!Note]
-> With **`virtio-tablet-pci`**, middle-click on your real mouse acts as a right-click in the VM.
- 
-The most reliable solution is to passthrough a physical mouse and keyboard together with an iGPU or dGPU.
+Better fix: disable **Use tablet for pointer** in the VM's **Options** tab, then run this in the Proxmox shell to use **`virtio-tablet-pci`** instead:
+```sh
+clear; read -p "Enter your macOS VM ID number: " VMID; \
+ARGS="$(qm config $VMID --current | grep ^args: | cut -d' ' -f2-)"; \
+qm set $VMID -args "$ARGS -device virtio-tablet"
+```
 
-Alternatively, use a remote desktop solution, e.g. **VNC Screen Sharing** (Settings → General → Sharing) or **Chrome Remote Desktop**.
+> [!NOTE]
+> With **`virtio-tablet-pci`**, middle-click acts as right-click in the VM.
+
+Most reliable: pass through a physical mouse and keyboard along with an iGPU or dGPU. Otherwise, use remote desktop, e.g. **VNC Screen Sharing** (Settings → General → Sharing) or **Chrome Remote Desktop**.
 
 ---
 
@@ -294,7 +280,7 @@ It also includes components from Acidanthera and other developers, each with the
 Thank you for respecting the work that went into this project!
 
 ## Disclaimer
-This project is provided “as‑is”, without any warranties, and is intended for educational, research, and security testing purposes. In no event shall the authors or contributors be liable for any direct, indirect, incidental, special, or consequential damages arising from use of the project, even if advised of the possibility of such damages.
+This project is provided "as is", without any warranties, and is intended for educational, research, and security testing purposes. In no event shall the authors or contributors be liable for any direct, indirect, incidental, special, or consequential damages arising from use of the project, even if advised of the possibility of such damages.
 
 All product names, trademarks, and registered trademarks are property of their respective owners. All company, product, and service names used in this repository are for identification purposes only.
 
